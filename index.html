@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ежедневные цели</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-soft: #111827;
+      --card: #020617;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.15);
+      --text: #e5e7eb;
+      --text-soft: #9ca3af;
+      --border: #1f2937;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #111827, #020617 60%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1100px;
+      background: linear-gradient(145deg, rgba(15,23,42,0.96), rgba(2,6,23,0.98));
+      border-radius: 24px;
+      border: 1px solid rgba(148,163,184,0.12);
+      box-shadow:
+        0 30px 80px rgba(0,0,0,0.7),
+        0 0 0 1px rgba(15,23,42,0.9) inset;
+      padding: 16px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: 100vh;
+      overflow: auto;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    h1 span.logo-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 16px rgba(34,197,94,0.8);
+    }
+
+    header p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .date-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(15,23,42,0.7);
+      border-radius: 999px;
+      padding: 4px 6px 4px 10px;
+      border: 1px solid rgba(31,41,55,0.9);
+    }
+
+    .date-display-main { font-size: 14px; font-weight: 500; }
+    .date-display-sub { font-size: 11px; color: var(--text-soft); }
+
+    .date-labels { display: flex; flex-direction: column; margin-right: 6px; }
+
+    .date-nav button,
+    .date-nav input[type="date"] {
+      border-radius: 999px;
+      border: none;
+      outline: none;
+      padding: 6px 10px;
+      font-size: 12px;
+      background: #020617;
+      color: var(--text);
+      cursor: pointer;
+      border: 1px solid rgba(31,41,55,0.9);
+    }
+
+    .date-nav button:hover { background: #02081f; }
+
+    .date-nav .today-btn {
+      background: var(--accent-soft);
+      border-color: rgba(34,197,94,0.4);
+    }
+    .date-nav .today-btn:hover { background: rgba(34,197,94,0.25); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .card {
+      background: radial-gradient(circle at top left, rgba(15,23,42,0.95), #020617);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      padding: 12px 12px 10px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .card-header h2 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-header h2 span { font-size: 18px; }
+
+    .chip {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(55,65,81,0.9);
+      color: var(--text-soft);
+      white-space: nowrap;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+    }
+    .form-row.full { grid-column: 1 / -1; }
+
+    label { color: var(--text-soft); }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="time"],
+    input[type="date"],
+    select,
+    textarea {
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #020617;
+      color: var(--text);
+      font-size: 13px;
+      padding: 7px 9px;
+      outline: none;
+      width: 100%;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 44px;
+      max-height: 120px;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: rgba(34,197,94,0.7);
+      box-shadow: 0 0 0 1px rgba(34,197,94,0.4);
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 7px 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      justify-content: center;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.12s ease;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #022c22;
+      font-weight: 600;
+      box-shadow: 0 8px 18px rgba(34,197,94,0.5);
+      border: 1px solid rgba(22,163,74,0.9);
+    }
+    .btn-primary:hover {
+      background: #16a34a;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(22,163,74,0.6);
+    }
+
+    .btn-secondary {
+      background: rgba(15,23,42,0.9);
+      color: var(--text-soft);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: #020617; }
+
+    .btn-danger {
+      background: rgba(127,29,29,0.9);
+      color: #fee2e2;
+      border: 1px solid rgba(127,29,29,1);
+    }
+
+    .btn-small { font-size: 11px; padding: 4px 8px; }
+
+    .btn:active { transform: translateY(0); box-shadow: none; }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .stat-card {
+      background: rgba(15,23,42,0.9);
+      border-radius: 12px;
+      padding: 8px 9px;
+      border: 1px solid rgba(31,41,55,0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .stat-label { font-size: 11px; color: var(--text-soft); }
+    .stat-value { font-size: 15px; font-weight: 600; }
+    .stat-sub { font-size: 10px; color: var(--text-soft); }
+
+    .tasks-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .tasks-header-row span.info {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .tasks-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 420px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .task-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1.5fr) minmax(0, 0.9fr) auto;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 9px;
+      border-radius: 10px;
+      background: rgba(15,23,42,0.85);
+      border: 1px solid rgba(31,41,55,0.95);
+      font-size: 12px;
+    }
+
+    .task-main { display: flex; flex-direction: column; gap: 2px; }
+    .task-title { font-size: 13px; font-weight: 500; }
+
+    .task-badges { display: flex; flex-wrap: wrap; gap: 4px; }
+
+    .badge {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(55,65,81,0.9);
+      background: rgba(15,23,42,0.9);
+      color: var(--text-soft);
+    }
+    .badge-required {
+      border-color: rgba(248,113,113,0.9);
+      color: #fecaca;
+      background: rgba(127,29,29,0.45);
+    }
+    .badge-optional {
+      border-color: rgba(59,130,246,0.8);
+      color: #bfdbfe;
+      background: rgba(15,23,42,0.95);
+    }
+    .badge-habit {
+      border-color: rgba(234,179,8,0.8);
+      color: #facc15;
+      background: rgba(23,23,23,0.95);
+    }
+
+    .task-meta { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--text-soft); }
+    .task-actions { display: flex; gap: 6px; }
+
+    .task-checkbox { display: flex; align-items: center; justify-content: center; }
+    .task-checkbox input { transform: scale(1.1); cursor: pointer; }
+
+    .task-done .task-title { text-decoration: line-through; color: var(--text-soft); }
+
+    .task-notes { font-size: 11px; color: #a5b4fc; margin-top: 2px; }
+
+    .empty-state {
+      font-size: 12px;
+      color: var(--text-soft);
+      text-align: center;
+      padding: 16px 0;
+      border-radius: 8px;
+      background: rgba(15,23,42,0.7);
+      border: 1px dashed rgba(31,41,55,0.9);
+    }
+
+    .pill {
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(34,197,94,0.2);
+      border: 1px solid rgba(34,197,94,0.5);
+      font-size: 10px;
+      color: #bbf7d0;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .pill-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+
+    .day-comment-block {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+    }
+
+    .range-inline {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .range-inline span { font-size: 14px; color: var(--text-soft); }
+
+    /* scroll */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #020617; }
+    ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 999px; }
+
+    /* ===== Адаптация под планшеты/телефоны ===== */
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+
+      .task-row {
+        grid-template-columns: auto minmax(0, 1.8fr) minmax(0, 1.2fr);
+        grid-template-rows: auto auto;
+      }
+      .task-actions {
+        grid-column: 2 / -1;
+        justify-content: flex-end;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 6px; }
+
+      .app {
+        padding: 10px;
+        border-radius: 18px;
+        max-height: none;     /* на телефоне — просто обычный скролл страницы */
+      }
+
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .card { padding: 10px 10px 8px; }
+
+      .form-grid { grid-template-columns: 1fr; }
+
+      .tasks-list { max-height: 60vh; }
+
+      .date-nav {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        row-gap: 4px;
+      }
+
+      .date-labels { margin-right: 4px; }
+
+      .date-nav input[type="date"] {
+        flex: 1;
+        min-width: 110px;
+      }
+
+      .date-nav button {
+        padding-inline: 8px;
+        margin-top: 2px;
+      }
+
+      .btn { padding: 8px 14px; }
+
+      input[type="text"],
+      input[type="number"],
+      input[type="time"],
+      input[type="date"],
+      select,
+      textarea {
+        font-size: 14px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 18px; }
+      header p { font-size: 12px; }
+
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+
+      .tasks-list { max-height: 55vh; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="app">
+  <header>
+    <div class="title-block">
+      <h1><span class="logo-dot"></span> Ежедневные цели</h1>
+      <p>Планируй день, отмечай выполнение и смотри статистику по каждой дате.</p>
+    </div>
+    <div class="date-nav">
+      <div class="date-labels">
+        <div class="date-display-main" id="dateDisplayMain"></div>
+        <div class="date-display-sub" id="dateDisplaySub"></div>
+      </div>
+      <button id="prevDayBtn" title="Предыдущий день">◀</button>
+      <button id="todayBtn" class="today-btn" title="Сегодня">Сегодня</button>
+      <button id="nextDayBtn" title="Следующий день">▶</button>
+      <input type="date" id="datePicker" />
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Левая колонка -->
+    <section class="card">
+      <div class="card-header">
+        <h2><span>📌</span> Новая цель / редактирование</h2>
+        <span class="chip" id="formModeChip">Режим: добавление</span>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-row full">
+          <label for="titleInput">Название цели</label>
+          <input type="text" id="titleInput" placeholder="Например, пробежка 3 км, отчёт по работе..." />
+        </div>
+
+        <div class="form-row">
+          <label for="typeSelect">Тип цели</label>
+          <select id="typeSelect">
+            <option value="required">Обязательная</option>
+            <option value="optional">Необязательная</option>
+            <option value="habit">Привычка</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="categoryInput">Категория (опционально)</label>
+          <input type="text" id="categoryInput" placeholder="Работа, здоровье, личное..." />
+        </div>
+
+        <div class="form-row">
+          <label for="periodSelect">Период цели</label>
+          <select id="periodSelect">
+            <option value="single">На один день (выбранная дата)</option>
+            <option value="daily">Ежедневно (долгосрочно)</option>
+            <option value="range">На диапазон дат (каждый день)</option>
+          </select>
+        </div>
+
+        <div class="form-row" id="periodRangeRow" style="display:none;">
+          <label>Диапазон дат (включительно)</label>
+          <div class="range-inline">
+            <input type="date" id="periodStartInput" />
+            <span>—</span>
+            <input type="date" id="periodEndInput" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="timeOfDayInput">Время выполнения (опционально)</label>
+          <input type="time" id="timeOfDayInput" />
+        </div>
+
+        <div class="form-row">
+          <label for="plannedMinutesInput">Плановое время (мин., опционально)</label>
+          <input type="number" id="plannedMinutesInput" min="0" step="5" placeholder="Напр. 30" />
+        </div>
+
+        <div class="form-row">
+          <label for="pointsInput">Баллы (опционально)</label>
+          <input type="number" id="pointsInput" min="0" step="1" placeholder="Напр. 5" />
+        </div>
+
+        <div class="form-row full">
+          <label for="notesInput">Комментарий к цели (опционально)</label>
+          <textarea id="notesInput" placeholder="Что важно учесть, на что обратить внимание..."></textarea>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-secondary btn-small" id="resetFormBtn" type="button">Очистить</button>
+        <button class="btn btn-primary" id="saveTaskBtn" type="button">
+          💾 <span id="saveTaskBtnLabel">Добавить цель</span>
+        </button>
+      </div>
+
+      <!-- Статистика дня -->
+      <div class="card-header" style="margin-top: 10px;">
+        <h2><span>📊</span> Статистика дня</h2>
+        <span class="chip" id="statsDateLabel"></span>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Выполнено</div>
+          <div class="stat-value" id="statCompleted"></div>
+          <div class="stat-sub" id="statCompletedSub"></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Процент выполнения</div>
+          <div class="stat-value" id="statPercent"></div>
+          <div class="stat-sub">% от всех задач</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Плановое время</div>
+          <div class="stat-value" id="statPlannedTime"></div>
+          <div class="stat-sub">минут по плану</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Фактическое время</div>
+          <div class="stat-value" id="statActualTime"></div>
+          <div class="stat-sub">минут по факту</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Баллы за день</div>
+          <div class="stat-value" id="statPoints"></div>
+          <div class="stat-sub">по выполненным задачам</div>
+        </div>
+      </div>
+
+      <!-- Комментарий к дню -->
+      <div class="card-header" style="margin-top: 10px;">
+        <h2><span>📝</span> Комментарий к дню</h2>
+      </div>
+      <div class="day-comment-block">
+        <label for="dayCommentInput">Общий комментарий / итоги дня</label>
+        <textarea id="dayCommentInput" placeholder="Настроение, выводы, что получилось или не получилось..."></textarea>
+        <div class="form-actions" style="margin-top: 2px; justify-content: flex-end;">
+          <button class="btn btn-secondary btn-small" id="saveDayCommentBtn" type="button">
+            Сохранить комментарий дня
+          </button>
+        </div>
+      </div>
+
+      <!-- Статистика диапазона -->
+      <div class="card-header" style="margin-top: 10px;">
+        <h2><span>📈</span> Статистика диапазона</h2>
+      </div>
+      <div>
+        <div class="form-grid" style="margin-bottom:4px;">
+          <div class="form-row">
+            <label for="rangeStartInput">С даты</label>
+            <input type="date" id="rangeStartInput" />
+          </div>
+          <div class="form-row">
+            <label for="rangeEndInput">По дату</label>
+            <input type="date" id="rangeEndInput" />
+          </div>
+        </div>
+        <div class="form-actions" style="margin-top:0; justify-content:flex-end;">
+          <button class="btn btn-secondary btn-small" id="calcRangeBtn" type="button">
+            Посчитать
+          </button>
+        </div>
+
+        <div class="stats-grid" style="margin-top:6px;">
+          <div class="stat-card">
+            <div class="stat-label">Дней в диапазоне</div>
+            <div class="stat-value" id="rangeDays"></div>
+            <div class="stat-sub">включительно</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Задач выполнено</div>
+            <div class="stat-value" id="rangeDone"></div>
+            <div class="stat-sub" id="rangeTasksInfo"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Процент выполнения</div>
+            <div class="stat-value" id="rangePercent"></div>
+            <div class="stat-sub">% от всех задач</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Плановое время</div>
+            <div class="stat-value" id="rangePlanned"></div>
+            <div class="stat-sub">минут</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Фактическое время</div>
+            <div class="stat-value" id="rangeActual"></div>
+            <div class="stat-sub">минут</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Баллы</div>
+            <div class="stat-value" id="rangePoints"></div>
+            <div class="stat-sub">по выполненным</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Правая колонка -->
+    <section class="card">
+      <div class="tasks-header-row">
+        <div>
+          <div class="card-header" style="margin:0; padding:0; border:none;">
+            <h2><span>✅</span> Цели на день</h2>
+          </div>
+          <span class="info" id="tasksInfo"></span>
+        </div>
+        <span class="pill">
+          <span class="pill-dot"></span> Сохранение локально
+        </span>
+      </div>
+      <div class="tasks-list" id="tasksList"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+  // ==== утилиты дат ====
+  function toDateKey(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  function formatDateHuman(date) {
+    return new Intl.DateTimeFormat("ru-RU", {
+      weekday: "short",
+      day: "2-digit",
+      month: "short",
+    }).format(date);
+  }
+
+  function formatDateFull(date) {
+    return new Intl.DateTimeFormat("ru-RU", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(date);
+  }
+
+  function parseDateFromInput(value) {
+    const [y, m, d] = value.split("-");
+    return new Date(Number(y), Number(m) - 1, Number(d));
+  }
+
+  // ==== storage ====
+  const STORAGE_KEY = "dailyGoals_v2";
+
+  function loadAllData() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return {};
+      return JSON.parse(raw);
+    } catch {
+      return {};
+    }
+  }
+
+  function saveAllData(data) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch {}
+  }
+
+  function getDayData(dateKey) {
+    const all = loadAllData();
+    const raw = all[dateKey];
+    if (!raw) return { tasks: [], dayComment: "" };
+    if (Array.isArray(raw)) return { tasks: raw, dayComment: "" }; // старая версия
+    return {
+      tasks: Array.isArray(raw.tasks) ? raw.tasks : [],
+      dayComment: raw.dayComment || "",
+    };
+  }
+
+  function saveDayData(dateKey, patch) {
+    const all = loadAllData();
+    const existing = getDayData(dateKey);
+    all[dateKey] = { ...existing, ...patch };
+    saveAllData(all);
+  }
+
+  function getTasksForDate(dateKey) {
+    return getDayData(dateKey).tasks;
+  }
+  function saveTasksForDate(dateKey, tasks) {
+    saveDayData(dateKey, { tasks });
+  }
+  function getDayComment(dateKey) {
+    return getDayData(dateKey).dayComment || "";
+  }
+  function saveDayComment(dateKey, comment) {
+    saveDayData(dateKey, { dayComment: comment });
+  }
+
+  function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  // ==== состояние ====
+  const state = {
+    currentDate: new Date(),
+    editingTaskId: null,
+  };
+
+  // ==== DOM ====
+  const dateDisplayMain = document.getElementById("dateDisplayMain");
+  const dateDisplaySub = document.getElementById("dateDisplaySub");
+  const datePicker = document.getElementById("datePicker");
+  const prevDayBtn = document.getElementById("prevDayBtn");
+  const nextDayBtn = document.getElementById("nextDayBtn");
+  const todayBtn = document.getElementById("todayBtn");
+
+  const titleInput = document.getElementById("titleInput");
+  const typeSelect = document.getElementById("typeSelect");
+  const categoryInput = document.getElementById("categoryInput");
+  const periodSelect = document.getElementById("periodSelect");
+  const periodRangeRow = document.getElementById("periodRangeRow");
+  const periodStartInput = document.getElementById("periodStartInput");
+  const periodEndInput = document.getElementById("periodEndInput");
+  const timeOfDayInput = document.getElementById("timeOfDayInput");
+  const plannedMinutesInput = document.getElementById("plannedMinutesInput");
+  const pointsInput = document.getElementById("pointsInput");
+  const notesInput = document.getElementById("notesInput");
+
+  const saveTaskBtn = document.getElementById("saveTaskBtn");
+  const saveTaskBtnLabel = document.getElementById("saveTaskBtnLabel");
+  const resetFormBtn = document.getElementById("resetFormBtn");
+  const formModeChip = document.getElementById("formModeChip");
+
+  const statsDateLabel = document.getElementById("statsDateLabel");
+  const statCompleted = document.getElementById("statCompleted");
+  const statCompletedSub = document.getElementById("statCompletedSub");
+  const statPercent = document.getElementById("statPercent");
+  const statPlannedTime = document.getElementById("statPlannedTime");
+  const statActualTime = document.getElementById("statActualTime");
+  const statPoints = document.getElementById("statPoints");
+
+  const dayCommentInput = document.getElementById("dayCommentInput");
+  const saveDayCommentBtn = document.getElementById("saveDayCommentBtn");
+
+  const rangeStartInput = document.getElementById("rangeStartInput");
+  const rangeEndInput = document.getElementById("rangeEndInput");
+  const calcRangeBtn = document.getElementById("calcRangeBtn");
+  const rangeDays = document.getElementById("rangeDays");
+  const rangeDone = document.getElementById("rangeDone");
+  const rangeTasksInfo = document.getElementById("rangeTasksInfo");
+  const rangePercent = document.getElementById("rangePercent");
+  const rangePlanned = document.getElementById("rangePlanned");
+  const rangeActual = document.getElementById("rangeActual");
+  const rangePoints = document.getElementById("rangePoints");
+
+  const tasksList = document.getElementById("tasksList");
+  const tasksInfo = document.getElementById("tasksInfo");
+
+  // ==== UI по дате ====
+  function updateDateUI() {
+    const date = state.currentDate;
+    const key = toDateKey(date);
+
+    dateDisplayMain.textContent = formatDateHuman(date);
+    dateDisplaySub.textContent = formatDateFull(date);
+    datePicker.value = key;
+    statsDateLabel.textContent = key;
+
+    dayCommentInput.value = getDayComment(key);
+
+    renderTasks();
+    updateStats();
+  }
+
+  // ==== период цели ====
+  function updatePeriodVisibility() {
+    const val = periodSelect.value;
+    if (val === "single") {
+      periodRangeRow.style.display = "none";
+    } else {
+      periodRangeRow.style.display = "flex";
+      if (!periodStartInput.value) {
+        periodStartInput.value = toDateKey(state.currentDate);
+      }
+      if (!periodEndInput.value) {
+        const d = new Date(state.currentDate);
+        if (val === "daily") d.setDate(d.getDate() + 365);
+        periodEndInput.value = toDateKey(d);
+      }
+    }
+  }
+  periodSelect.addEventListener("change", updatePeriodVisibility);
+
+  // ==== рендер задач ====
+  function renderTasks() {
+    const dateKey = toDateKey(state.currentDate);
+    const tasks = getTasksForDate(dateKey);
+    tasksList.innerHTML = "";
+
+    if (!tasks.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = "На этот день пока нет целей. Добавь первую в блоке слева.";
+      tasksList.appendChild(empty);
+      tasksInfo.textContent = "";
+      return;
+    }
+
+    tasksInfo.textContent = `Задач: ${tasks.length}`;
+
+    tasks
+      .slice()
+      .sort((a, b) => {
+        if (a.type === "required" && b.type !== "required") return -1;
+        if (b.type === "required" && a.type !== "required") return 1;
+        if (a.timeOfDay && b.timeOfDay) return a.timeOfDay.localeCompare(b.timeOfDay);
+        if (a.timeOfDay && !b.timeOfDay) return -1;
+        if (!a.timeOfDay && b.timeOfDay) return 1;
+        return (a.createdAt || 0) - (b.createdAt || 0);
+      })
+      .forEach(task => {
+        const row = document.createElement("div");
+        row.className = "task-row";
+        if (task.done) row.classList.add("task-done");
+
+        const checkboxCell = document.createElement("div");
+        checkboxCell.className = "task-checkbox";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = !!task.done;
+        checkbox.addEventListener("change", () => toggleTaskDone(task.id, checkbox.checked));
+        checkboxCell.appendChild(checkbox);
+
+        const mainCell = document.createElement("div");
+        mainCell.className = "task-main";
+        const titleEl = document.createElement("div");
+        titleEl.className = "task-title";
+        titleEl.textContent = task.title || "(Без названия)";
+        mainCell.appendChild(titleEl);
+
+        const badgesWrapper = document.createElement("div");
+        badgesWrapper.className = "task-badges";
+
+        const typeBadge = document.createElement("span");
+        typeBadge.className = "badge";
+        if (task.type === "required") {
+          typeBadge.classList.add("badge-required");
+          typeBadge.textContent = "Обязательная";
+        } else if (task.type === "optional") {
+          typeBadge.classList.add("badge-optional");
+          typeBadge.textContent = "Необязательная";
+        } else {
+          typeBadge.classList.add("badge-habit");
+          typeBadge.textContent = "Привычка";
+        }
+        badgesWrapper.appendChild(typeBadge);
+
+        if (task.category) {
+          const catBadge = document.createElement("span");
+          catBadge.className = "badge";
+          catBadge.textContent = task.category;
+          badgesWrapper.appendChild(catBadge);
+        }
+
+        if (typeof task.plannedMinutes === "number" && task.plannedMinutes > 0) {
+          const timeBadge = document.createElement("span");
+          timeBadge.className = "badge";
+          timeBadge.textContent = `План: ${task.plannedMinutes} мин`;
+          badgesWrapper.appendChild(timeBadge);
+        }
+
+        if (typeof task.actualMinutes === "number" && task.actualMinutes > 0) {
+          const actualBadge = document.createElement("span");
+          actualBadge.className = "badge";
+          actualBadge.textContent = `Факт: ${task.actualMinutes} мин`;
+          badgesWrapper.appendChild(actualBadge);
+        }
+
+        if (typeof task.points === "number" && task.points > 0) {
+          const pointsBadge = document.createElement("span");
+          pointsBadge.className = "badge";
+          pointsBadge.textContent = `Баллы: ${task.points}`;
+          badgesWrapper.appendChild(pointsBadge);
+        }
+
+        mainCell.appendChild(badgesWrapper);
+
+        if (task.notes && task.notes.trim()) {
+          const notesEl = document.createElement("div");
+          notesEl.className = "task-notes";
+          notesEl.textContent = task.notes.trim();
+          mainCell.appendChild(notesEl);
+        }
+
+        const metaCell = document.createElement("div");
+        metaCell.className = "task-meta";
+        if (task.timeOfDay) {
+          const timeRow = document.createElement("div");
+          timeRow.textContent = `Время: ${task.timeOfDay}`;
+          metaCell.appendChild(timeRow);
+        }
+        if (task.done && task.doneAt) {
+          const doneRow = document.createElement("div");
+          const doneDate = new Date(task.doneAt);
+          doneRow.textContent = `Выполнено: ${doneDate.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`;
+          metaCell.appendChild(doneRow);
+        }
+
+        const actionsCell = document.createElement("div");
+        actionsCell.className = "task-actions";
+        const editBtn = document.createElement("button");
+        editBtn.className = "btn btn-secondary btn-small";
+        editBtn.textContent = "✏ Изм.";
+        editBtn.addEventListener("click", () => startEditTask(task.id));
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "btn btn-danger btn-small";
+        deleteBtn.textContent = "✕";
+        deleteBtn.title = "Удалить";
+        deleteBtn.addEventListener("click", () => deleteTask(task.id));
+
+        actionsCell.appendChild(editBtn);
+        actionsCell.appendChild(deleteBtn);
+
+        row.appendChild(checkboxCell);
+        row.appendChild(mainCell);
+        row.appendChild(metaCell);
+        row.appendChild(actionsCell);
+
+        tasksList.appendChild(row);
+      });
+  }
+
+  // ==== статистика дня ====
+  function updateStats() {
+    const dateKey = toDateKey(state.currentDate);
+    const tasks = getTasksForDate(dateKey);
+    const total = tasks.length;
+    const doneTasks = tasks.filter(t => t.done);
+    const done = doneTasks.length;
+    const planned = tasks.reduce((s, t) => s + (Number(t.plannedMinutes) || 0), 0);
+    const actual = tasks.reduce((s, t) => s + (Number(t.actualMinutes) || 0), 0);
+    const points = doneTasks.reduce((s, t) => s + (Number(t.points) || 0), 0);
+    const percent = total ? Math.round((done / total) * 100) : 0;
+
+    statCompleted.textContent = `${done} / ${total}`;
+    statCompletedSub.textContent = total ? `Осталось: ${total - done}` : "Нет задач";
+    statPercent.textContent = `${percent}%`;
+    statPlannedTime.textContent = planned;
+    statActualTime.textContent = actual;
+    statPoints.textContent = points;
+  }
+
+  // ==== статистика диапазона ====
+  function calcRangeStats() {
+    if (!rangeStartInput.value || !rangeEndInput.value) {
+      alert("Выбери обе даты для диапазона.");
+      return;
+    }
+    let startDate = parseDateFromInput(rangeStartInput.value);
+    let endDate = parseDateFromInput(rangeEndInput.value);
+    if (endDate < startDate) [startDate, endDate] = [endDate, startDate];
+
+    let daysCount = 0;
+    let totalTasks = 0;
+    let doneTasks = 0;
+    let planned = 0;
+    let actual = 0;
+    let points = 0;
+
+    const d = new Date(startDate);
+    while (d <= endDate) {
+      daysCount++;
+      const key = toDateKey(d);
+      const tasks = getTasksForDate(key);
+      totalTasks += tasks.length;
+      for (const t of tasks) {
+        if (t.done) doneTasks++;
+        planned += Number(t.plannedMinutes) || 0;
+        actual += Number(t.actualMinutes) || 0;
+        if (t.done) points += Number(t.points) || 0;
+      }
+      d.setDate(d.getDate() + 1);
+    }
+
+    const percent = totalTasks ? Math.round((doneTasks / totalTasks) * 100) : 0;
+
+    rangeDays.textContent = daysCount;
+    rangeDone.textContent = doneTasks;
+    rangeTasksInfo.textContent = `из ${totalTasks} задач`;
+    rangePercent.textContent = `${percent}%`;
+    rangePlanned.textContent = planned;
+    rangeActual.textContent = actual;
+    rangePoints.textContent = points;
+  }
+  calcRangeBtn.addEventListener("click", calcRangeStats);
+
+  // ==== формы ====
+  function resetForm() {
+    state.editingTaskId = null;
+    titleInput.value = "";
+    typeSelect.value = "required";
+    categoryInput.value = "";
+    periodSelect.value = "single";
+    periodStartInput.value = "";
+    periodEndInput.value = "";
+    updatePeriodVisibility();
+    timeOfDayInput.value = "";
+    plannedMinutesInput.value = "";
+    pointsInput.value = "";
+    notesInput.value = "";
+    formModeChip.textContent = "Режим: добавление";
+    saveTaskBtnLabel.textContent = "Добавить цель";
+  }
+
+  function saveTaskFromForm() {
+    const title = titleInput.value.trim();
+    if (!title) {
+      alert("Пожалуйста, введи название цели.");
+      return;
+    }
+
+    const taskData = {
+      title,
+      type: typeSelect.value,
+      category: categoryInput.value.trim() || "",
+      timeOfDay: timeOfDayInput.value || "",
+      plannedMinutes: plannedMinutesInput.value ? Number(plannedMinutesInput.value) : null,
+      points: pointsInput.value ? Number(pointsInput.value) : 0,
+      notes: notesInput.value.trim(),
+    };
+
+    // редактирование одной задачи текущего дня
+    if (state.editingTaskId) {
+      const dateKey = toDateKey(state.currentDate);
+      const tasks = getTasksForDate(dateKey);
+      const idx = tasks.findIndex(t => t.id === state.editingTaskId);
+      if (idx !== -1) tasks[idx] = { ...tasks[idx], ...taskData };
+      saveTasksForDate(dateKey, tasks);
+      resetForm();
+      renderTasks();
+      updateStats();
+      return;
+    }
+
+    // создание новой цели
+    const period = periodSelect.value;
+    let targetDates = [];
+
+    if (period === "single") {
+      targetDates = [toDateKey(state.currentDate)];
+    } else {
+      let startStr = periodStartInput.value || toDateKey(state.currentDate);
+      let endStr = periodEndInput.value;
+
+      if (!endStr) {
+        if (period === "daily") {
+          const sd = parseDateFromInput(startStr);
+          sd.setDate(sd.getDate() + 365);
+          endStr = toDateKey(sd);
+        } else {
+          endStr = startStr;
+        }
+      }
+
+      let startDate = parseDateFromInput(startStr);
+      let endDate = parseDateFromInput(endStr);
+      if (endDate < startDate) [startDate, endDate] = [endDate, startDate];
+
+      const d = new Date(startDate);
+      while (d <= endDate) {
+        targetDates.push(toDateKey(d));
+        d.setDate(d.getDate() + 1);
+      }
+    }
+
+    for (const dateKey of targetDates) {
+      const tasks = getTasksForDate(dateKey);
+      tasks.push({
+        id: generateId(),
+        ...taskData,
+        done: false,
+        actualMinutes: null,
+        doneAt: null,
+        createdAt: Date.now(),
+      });
+      saveTasksForDate(dateKey, tasks);
+    }
+
+    resetForm();
+    renderTasks();
+    updateStats();
+  }
+
+  function startEditTask(taskId) {
+    const dateKey = toDateKey(state.currentDate);
+    const tasks = getTasksForDate(dateKey);
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    state.editingTaskId = taskId;
+    titleInput.value = task.title || "";
+    typeSelect.value = task.type || "required";
+    categoryInput.value = task.category || "";
+    periodSelect.value = "single";
+    updatePeriodVisibility();
+    timeOfDayInput.value = task.timeOfDay || "";
+    plannedMinutesInput.value = task.plannedMinutes ?? "";
+    pointsInput.value = task.points ?? "";
+    notesInput.value = task.notes || "";
+
+    formModeChip.textContent = "Режим: редактирование";
+    saveTaskBtnLabel.textContent = "Сохранить изменения";
+  }
+
+  function deleteTask(taskId) {
+    if (!confirm("Удалить эту цель?")) return;
+    const dateKey = toDateKey(state.currentDate);
+    const tasks = getTasksForDate(dateKey);
+    const updated = tasks.filter(t => t.id !== taskId);
+    saveTasksForDate(dateKey, updated);
+    if (state.editingTaskId === taskId) resetForm();
+    renderTasks();
+    updateStats();
+  }
+
+  function toggleTaskDone(taskId, done) {
+    const dateKey = toDateKey(state.currentDate);
+    const tasks = getTasksForDate(dateKey);
+    const idx = tasks.findIndex(t => t.id === taskId);
+    if (idx === -1) return;
+
+    const task = tasks[idx];
+    task.done = done;
+    task.doneAt = done ? Date.now() : null;
+
+    if (done) {
+      const extra = prompt(
+        "Если хочешь, укажи фактическое время (минуты) и комментарий.\nФормат: 25; написал отчёт полностью"
+      );
+      if (extra && extra.trim()) {
+        const parts = extra.split(";");
+        if (parts[0]) {
+          const mins = Number(String(parts[0]).trim());
+          if (!Number.isNaN(mins)) task.actualMinutes = mins;
+        }
+        if (parts[1]) {
+          const comment = parts.slice(1).join(";").trim();
+          task.notes = (task.notes ? task.notes + " | " : "") + comment;
+        }
+      }
+    }
+
+    tasks[idx] = task;
+    saveTasksForDate(dateKey, tasks);
+    renderTasks();
+    updateStats();
+  }
+
+  // ==== навигация по датам ====
+  prevDayBtn.addEventListener("click", () => {
+    state.currentDate.setDate(state.currentDate.getDate() - 1);
+    updateDateUI();
+  });
+  nextDayBtn.addEventListener("click", () => {
+    state.currentDate.setDate(state.currentDate.getDate() + 1);
+    updateDateUI();
+  });
+  todayBtn.addEventListener("click", () => {
+    state.currentDate = new Date();
+    updateDateUI();
+  });
+  datePicker.addEventListener("change", () => {
+    if (!datePicker.value) return;
+    const [y, m, d] = datePicker.value.split("-");
+    state.currentDate = new Date(Number(y), Number(m) - 1, Number(d));
+    updateDateUI();
+  });
+
+  // ==== комментарий к дню ====
+  saveDayCommentBtn.addEventListener("click", () => {
+    const dateKey = toDateKey(state.currentDate);
+    saveDayComment(dateKey, dayCommentInput.value.trim());
+    saveDayCommentBtn.textContent = "Сохранено";
+    setTimeout(() => {
+      saveDayCommentBtn.textContent = "Сохранить комментарий дня";
+    }, 1000);
+  });
+
+  // ==== кнопки формы ====
+  saveTaskBtn.addEventListener("click", saveTaskFromForm);
+  resetFormBtn.addEventListener("click", resetForm);
+
+  // ==== старт ====
+  document.addEventListener("DOMContentLoaded", () => {
+    const todayKey = toDateKey(state.currentDate);
+    datePicker.value = todayKey;
+    periodStartInput.value = todayKey;
+    rangeStartInput.value = todayKey;
+    rangeEndInput.value = todayKey;
+    updatePeriodVisibility();
+    updateDateUI();
+    calcRangeStats();
+  });
+</script>
+</body>
+</html>
