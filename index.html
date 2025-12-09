@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Ежедневные цели</title>
+  <title>Ежедневные цели и деньги</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
@@ -12,6 +12,7 @@
       --card: #020617;
       --accent: #22c55e;
       --accent-soft: rgba(34, 197, 94, 0.15);
+      --accent-danger: #ef4444;
       --text: #e5e7eb;
       --text-soft: #9ca3af;
       --border: #1f2937;
@@ -401,7 +402,99 @@
     ::-webkit-scrollbar-track { background: #020617; }
     ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 999px; }
 
-    /* ===== Адаптация под планшеты/телефоны ===== */
+    /* ===== блок денег ===== */
+    .finance-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
+      gap: 10px;
+    }
+    .finance-day-list,
+    .finance-range-list {
+      margin-top: 6px;
+      max-height: 210px;
+      overflow-y: auto;
+      padding-right: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .finance-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(0, 0.9fr) auto;
+      gap: 6px;
+      align-items: center;
+      padding: 6px 8px;
+      border-radius: 9px;
+      background: rgba(15,23,42,0.85);
+      border: 1px solid rgba(31,41,55,0.95);
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .finance-row-main {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .finance-amount.income { color: #4ade80; }
+    .finance-amount.expense { color: #f97373; }
+
+    .finance-row-meta {
+      font-size: 11px;
+      color: var(--text-soft);
+      text-align: right;
+    }
+
+    .finance-row-actions {
+      display: flex;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+
+    .finance-empty {
+      font-size: 11px;
+      color: var(--text-soft);
+      text-align: center;
+      padding: 10px 0;
+      border-radius: 8px;
+      border: 1px dashed rgba(31,41,55,0.9);
+    }
+
+    .finance-templates {
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+    .finance-templates-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 4px;
+    }
+    .finance-template-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(55,65,81,0.9);
+      cursor: pointer;
+    }
+
+    .finance-detail-box {
+      margin-top: 6px;
+      padding: 7px 9px;
+      border-radius: 10px;
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(55,65,81,0.9);
+      font-size: 12px;
+    }
+
+    .finance-detail-box span.label {
+      color: var(--text-soft);
+    }
+
+    /* ===== адаптация ===== */
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
 
@@ -421,7 +514,7 @@
       .app {
         padding: 10px;
         border-radius: 18px;
-        max-height: none;     /* на телефоне — просто обычный скролл страницы */
+        max-height: none;
       }
 
       header {
@@ -465,6 +558,8 @@
       textarea {
         font-size: 14px;
       }
+
+      .finance-layout { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 480px) {
@@ -482,8 +577,8 @@
 <div class="app">
   <header>
     <div class="title-block">
-      <h1><span class="logo-dot"></span> Ежедневные цели</h1>
-      <p>Планируй день, отмечай выполнение и смотри статистику по каждой дате.</p>
+      <h1><span class="logo-dot"></span> Ежедневные цели и деньги</h1>
+      <p>Планируй день, деньги и смотри подробную статистику.</p>
     </div>
     <div class="date-nav">
       <div class="date-labels">
@@ -619,9 +714,9 @@
         </div>
       </div>
 
-      <!-- Статистика диапазона -->
+      <!-- Статистика диапазона по целям -->
       <div class="card-header" style="margin-top: 10px;">
-        <h2><span>📈</span> Статистика диапазона</h2>
+        <h2><span>📈</span> Статистика диапазона (цели)</h2>
       </div>
       <div>
         <div class="form-grid" style="margin-bottom:4px;">
@@ -675,7 +770,7 @@
       </div>
     </section>
 
-    <!-- Правая колонка -->
+    <!-- Правая колонка — цели -->
     <section class="card">
       <div class="tasks-header-row">
         <div>
@@ -691,10 +786,138 @@
       <div class="tasks-list" id="tasksList"></div>
     </section>
   </div>
+
+  <!-- Карта денег на весь экран -->
+  <section class="card">
+    <div class="card-header">
+      <h2><span>💰</span> Деньги</h2>
+      <span class="chip" id="financeDayLabel"></span>
+    </div>
+
+    <div class="finance-layout">
+      <!-- Левая часть: операции текущего дня -->
+      <div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label for="financeTypeSelect">Тип</label>
+            <select id="financeTypeSelect">
+              <option value="expense">Расход</option>
+              <option value="income">Доход</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label for="financeAmountInput">Сумма</label>
+            <input type="number" id="financeAmountInput" step="0.01" placeholder="Напр. 1500" />
+          </div>
+          <div class="form-row">
+            <label for="financeCategoryInput">Категория</label>
+            <input type="text" id="financeCategoryInput" placeholder="Еда, проезд, зарплата..." />
+          </div>
+          <div class="form-row">
+            <label for="financeTimeInput">Время (опционально)</label>
+            <input type="time" id="financeTimeInput" />
+          </div>
+          <div class="form-row full">
+            <label for="financeDescriptionInput">Описание</label>
+            <textarea id="financeDescriptionInput" placeholder="Кофе в Старбаксе, аренда офиса, аванс..."></textarea>
+          </div>
+          <div class="form-row full">
+            <label for="financeTemplateSelect">Шаблон (постоянные операции)</label>
+            <select id="financeTemplateSelect">
+              <option value="">— не использовать —</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-secondary btn-small" id="financeResetBtn" type="button">Очистить</button>
+          <button class="btn btn-secondary btn-small" id="financeSaveTemplateBtn" type="button">Сохранить как шаблон</button>
+          <button class="btn btn-primary" id="financeSaveBtn" type="button">
+            ➕ <span id="financeSaveBtnLabel">Добавить операцию</span>
+          </button>
+        </div>
+
+        <div class="finance-templates">
+          Шаблоны:
+          <div class="finance-templates-list" id="financeTemplatesList"></div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <div class="card-header" style="margin:0 0 6px 0; padding:0; border:none;">
+            <h2 style="font-size:13px;"><span>📅</span> Операции за день</h2>
+          </div>
+          <div class="stats-grid" style="margin-top:2px;">
+            <div class="stat-card">
+              <div class="stat-label">Расход</div>
+              <div class="stat-value" id="financeDayExpense"></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Доход</div>
+              <div class="stat-value" id="financeDayIncome"></div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Баланс</div>
+              <div class="stat-value" id="financeDayBalance"></div>
+            </div>
+          </div>
+          <div class="finance-day-list" id="financeDayList"></div>
+        </div>
+      </div>
+
+      <!-- Правая часть: диапазон и детали -->
+      <div>
+        <div class="card-header" style="margin:0 0 6px 0; padding:0; border:none;">
+          <h2 style="font-size:13px;"><span>📊</span> Статистика по диапазону (деньги)</h2>
+        </div>
+        <div class="form-grid" style="margin-bottom:4px;">
+          <div class="form-row">
+            <label for="moneyRangeStartInput">С даты</label>
+            <input type="date" id="moneyRangeStartInput" />
+          </div>
+          <div class="form-row">
+            <label for="moneyRangeEndInput">По дату</label>
+            <input type="date" id="moneyRangeEndInput" />
+          </div>
+        </div>
+        <div class="form-actions" style="margin-top:0; justify-content:flex-end;">
+          <button class="btn btn-secondary btn-small" id="moneyRangeCalcBtn" type="button">Показать</button>
+        </div>
+
+        <div class="stats-grid" style="margin-top:6px;">
+          <div class="stat-card">
+            <div class="stat-label">Расход</div>
+            <div class="stat-value" id="moneyRangeExpense"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Доход</div>
+            <div class="stat-value" id="moneyRangeIncome"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Баланс</div>
+            <div class="stat-value" id="moneyRangeBalance"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Операций</div>
+            <div class="stat-value" id="moneyRangeCount"></div>
+          </div>
+        </div>
+
+        <div class="finance-range-list" id="moneyRangeList"></div>
+
+        <div class="finance-detail-box" id="moneyDetailBox" style="display:none;">
+          <div><span class="label">Тип:</span> <span id="moneyDetailType"></span></div>
+          <div><span class="label">Сумма:</span> <span id="moneyDetailAmount"></span></div>
+          <div><span class="label">Дата и время:</span> <span id="moneyDetailDateTime"></span></div>
+          <div><span class="label">Категория:</span> <span id="moneyDetailCategory"></span></div>
+          <div><span class="label">Описание:</span> <span id="moneyDetailDescription"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script>
-  // ==== утилиты дат ====
+  // ===== утилиты дат =====
   function toDateKey(date) {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -723,8 +946,12 @@
     return new Date(Number(y), Number(m) - 1, Number(d));
   }
 
-  // ==== storage ====
-  const STORAGE_KEY = "dailyGoals_v2";
+  function formatTimeHHMM(date) {
+    return date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  // ===== storage =====
+  const STORAGE_KEY = "dailyGoals_v3";
 
   function loadAllData() {
     try {
@@ -745,11 +972,15 @@
   function getDayData(dateKey) {
     const all = loadAllData();
     const raw = all[dateKey];
-    if (!raw) return { tasks: [], dayComment: "" };
-    if (Array.isArray(raw)) return { tasks: raw, dayComment: "" }; // старая версия
+    if (!raw) return { tasks: [], dayComment: "", finances: [] };
+    if (Array.isArray(raw)) {
+      // очень старая версия
+      return { tasks: raw, dayComment: "", finances: [] };
+    }
     return {
       tasks: Array.isArray(raw.tasks) ? raw.tasks : [],
       dayComment: raw.dayComment || "",
+      finances: Array.isArray(raw.finances) ? raw.finances : [],
     };
   }
 
@@ -773,17 +1004,36 @@
     saveDayData(dateKey, { dayComment: comment });
   }
 
+  function getFinancesForDate(dateKey) {
+    return getDayData(dateKey).finances || [];
+  }
+  function saveFinancesForDate(dateKey, finances) {
+    saveDayData(dateKey, { finances });
+  }
+
+  function getFinanceTemplates() {
+    const all = loadAllData();
+    return Array.isArray(all._financeTemplates) ? all._financeTemplates : [];
+  }
+  function saveFinanceTemplates(templates) {
+    const all = loadAllData();
+    all._financeTemplates = templates;
+    saveAllData(all);
+  }
+
   function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   }
 
-  // ==== состояние ====
+  // ===== состояние =====
   const state = {
     currentDate: new Date(),
     editingTaskId: null,
+    editingFinanceId: null,
+    selectedFinanceDetail: null,
   };
 
-  // ==== DOM ====
+  // ===== DOM =====
   const dateDisplayMain = document.getElementById("dateDisplayMain");
   const dateDisplaySub = document.getElementById("dateDisplaySub");
   const datePicker = document.getElementById("datePicker");
@@ -833,7 +1083,42 @@
   const tasksList = document.getElementById("tasksList");
   const tasksInfo = document.getElementById("tasksInfo");
 
-  // ==== UI по дате ====
+  // деньги — DOM
+  const financeDayLabel = document.getElementById("financeDayLabel");
+  const financeTypeSelect = document.getElementById("financeTypeSelect");
+  const financeAmountInput = document.getElementById("financeAmountInput");
+  const financeCategoryInput = document.getElementById("financeCategoryInput");
+  const financeTimeInput = document.getElementById("financeTimeInput");
+  const financeDescriptionInput = document.getElementById("financeDescriptionInput");
+  const financeTemplateSelect = document.getElementById("financeTemplateSelect");
+  const financeTemplatesList = document.getElementById("financeTemplatesList");
+  const financeSaveBtn = document.getElementById("financeSaveBtn");
+  const financeSaveBtnLabel = document.getElementById("financeSaveBtnLabel");
+  const financeResetBtn = document.getElementById("financeResetBtn");
+  const financeSaveTemplateBtn = document.getElementById("financeSaveTemplateBtn");
+
+  const financeDayExpense = document.getElementById("financeDayExpense");
+  const financeDayIncome = document.getElementById("financeDayIncome");
+  const financeDayBalance = document.getElementById("financeDayBalance");
+  const financeDayList = document.getElementById("financeDayList");
+
+  const moneyRangeStartInput = document.getElementById("moneyRangeStartInput");
+  const moneyRangeEndInput = document.getElementById("moneyRangeEndInput");
+  const moneyRangeCalcBtn = document.getElementById("moneyRangeCalcBtn");
+  const moneyRangeExpense = document.getElementById("moneyRangeExpense");
+  const moneyRangeIncome = document.getElementById("moneyRangeIncome");
+  const moneyRangeBalance = document.getElementById("moneyRangeBalance");
+  const moneyRangeCount = document.getElementById("moneyRangeCount");
+  const moneyRangeList = document.getElementById("moneyRangeList");
+
+  const moneyDetailBox = document.getElementById("moneyDetailBox");
+  const moneyDetailType = document.getElementById("moneyDetailType");
+  const moneyDetailAmount = document.getElementById("moneyDetailAmount");
+  const moneyDetailDateTime = document.getElementById("moneyDetailDateTime");
+  const moneyDetailCategory = document.getElementById("moneyDetailCategory");
+  const moneyDetailDescription = document.getElementById("moneyDetailDescription");
+
+  // ===== UI по дате =====
   function updateDateUI() {
     const date = state.currentDate;
     const key = toDateKey(date);
@@ -842,14 +1127,16 @@
     dateDisplaySub.textContent = formatDateFull(date);
     datePicker.value = key;
     statsDateLabel.textContent = key;
+    financeDayLabel.textContent = `Текущий день: ${key}`;
 
     dayCommentInput.value = getDayComment(key);
 
     renderTasks();
     updateStats();
+    renderFinanceDay();
   }
 
-  // ==== период цели ====
+  // ===== период цели =====
   function updatePeriodVisibility() {
     const val = periodSelect.value;
     if (val === "single") {
@@ -868,7 +1155,7 @@
   }
   periodSelect.addEventListener("change", updatePeriodVisibility);
 
-  // ==== рендер задач ====
+  // ===== рендер задач =====
   function renderTasks() {
     const dateKey = toDateKey(state.currentDate);
     const tasks = getTasksForDate(dateKey);
@@ -979,7 +1266,7 @@
         if (task.done && task.doneAt) {
           const doneRow = document.createElement("div");
           const doneDate = new Date(task.doneAt);
-          doneRow.textContent = `Выполнено: ${doneDate.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}`;
+          doneRow.textContent = `Выполнено: ${formatTimeHHMM(doneDate)}`;
           metaCell.appendChild(doneRow);
         }
 
@@ -989,13 +1276,11 @@
         editBtn.className = "btn btn-secondary btn-small";
         editBtn.textContent = "✏ Изм.";
         editBtn.addEventListener("click", () => startEditTask(task.id));
-
         const deleteBtn = document.createElement("button");
         deleteBtn.className = "btn btn-danger btn-small";
         deleteBtn.textContent = "✕";
         deleteBtn.title = "Удалить";
         deleteBtn.addEventListener("click", () => deleteTask(task.id));
-
         actionsCell.appendChild(editBtn);
         actionsCell.appendChild(deleteBtn);
 
@@ -1008,7 +1293,7 @@
       });
   }
 
-  // ==== статистика дня ====
+  // ===== статистика по целям =====
   function updateStats() {
     const dateKey = toDateKey(state.currentDate);
     const tasks = getTasksForDate(dateKey);
@@ -1028,7 +1313,6 @@
     statPoints.textContent = points;
   }
 
-  // ==== статистика диапазона ====
   function calcRangeStats() {
     if (!rangeStartInput.value || !rangeEndInput.value) {
       alert("Выбери обе даты для диапазона.");
@@ -1072,7 +1356,7 @@
   }
   calcRangeBtn.addEventListener("click", calcRangeStats);
 
-  // ==== формы ====
+  // ===== формы целей =====
   function resetForm() {
     state.editingTaskId = null;
     titleInput.value = "";
@@ -1107,7 +1391,6 @@
       notes: notesInput.value.trim(),
     };
 
-    // редактирование одной задачи текущего дня
     if (state.editingTaskId) {
       const dateKey = toDateKey(state.currentDate);
       const tasks = getTasksForDate(dateKey);
@@ -1120,7 +1403,6 @@
       return;
     }
 
-    // создание новой цели
     const period = periodSelect.value;
     let targetDates = [];
 
@@ -1234,7 +1516,7 @@
     updateStats();
   }
 
-  // ==== навигация по датам ====
+  // ===== навигация по датам =====
   prevDayBtn.addEventListener("click", () => {
     state.currentDate.setDate(state.currentDate.getDate() - 1);
     updateDateUI();
@@ -1254,7 +1536,7 @@
     updateDateUI();
   });
 
-  // ==== комментарий к дню ====
+  // ===== комментарий к дню =====
   saveDayCommentBtn.addEventListener("click", () => {
     const dateKey = toDateKey(state.currentDate);
     saveDayComment(dateKey, dayCommentInput.value.trim());
@@ -1264,20 +1546,347 @@
     }, 1000);
   });
 
-  // ==== кнопки формы ====
+  // ===== деньги: шаблоны =====
+  function renderFinanceTemplates() {
+    const templates = getFinanceTemplates();
+    financeTemplateSelect.innerHTML = '<option value="">— не использовать —</option>';
+    financeTemplatesList.innerHTML = "";
+
+    templates.forEach(t => {
+      const opt = document.createElement("option");
+      opt.value = t.id;
+      opt.textContent = `${t.kind === "expense" ? "−" : "+"}${t.amount} · ${t.title}`;
+      financeTemplateSelect.appendChild(opt);
+
+      const chip = document.createElement("div");
+      chip.className = "finance-template-chip";
+      chip.title = "Нажми, чтобы подставить";
+      chip.innerHTML = `<span>${t.kind === "expense" ? "−" : "+"}${t.amount}</span><span>${t.title}</span>`;
+      chip.addEventListener("click", () => applyFinanceTemplate(t.id));
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "btn btn-danger btn-small";
+      delBtn.textContent = "✕";
+      delBtn.style.padding = "0 5px";
+      delBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (!confirm("Удалить шаблон?")) return;
+        const updated = getFinanceTemplates().filter(x => x.id !== t.id);
+        saveFinanceTemplates(updated);
+        renderFinanceTemplates();
+      });
+
+      chip.appendChild(delBtn);
+      financeTemplatesList.appendChild(chip);
+    });
+  }
+
+  function applyFinanceTemplate(templateId) {
+    const t = getFinanceTemplates().find(x => x.id === templateId);
+    if (!t) return;
+    financeTypeSelect.value = t.kind || "expense";
+    financeAmountInput.value = t.amount != null ? t.amount : "";
+    financeCategoryInput.value = t.category || "";
+    financeDescriptionInput.value = t.description || "";
+  }
+
+  financeTemplateSelect.addEventListener("change", () => {
+    if (!financeTemplateSelect.value) return;
+    applyFinanceTemplate(financeTemplateSelect.value);
+  });
+
+  financeSaveTemplateBtn.addEventListener("click", () => {
+    const amount = Number(financeAmountInput.value);
+    const title = financeDescriptionInput.value.trim() || financeCategoryInput.value.trim();
+    if (!title) {
+      alert("Для шаблона нужно хотя бы описание или категорию.");
+      return;
+    }
+    if (Number.isNaN(amount) || !amount) {
+      alert("Для шаблона нужна сумма.");
+      return;
+    }
+    const templates = getFinanceTemplates();
+    templates.push({
+      id: generateId(),
+      title,
+      kind: financeTypeSelect.value || "expense",
+      amount,
+      category: financeCategoryInput.value.trim(),
+      description: financeDescriptionInput.value.trim(),
+    });
+    saveFinanceTemplates(templates);
+    renderFinanceTemplates();
+  });
+
+  // ===== деньги: операции за день =====
+  function resetFinanceForm() {
+    state.editingFinanceId = null;
+    financeTypeSelect.value = "expense";
+    financeAmountInput.value = "";
+    financeCategoryInput.value = "";
+    financeTimeInput.value = "";
+    financeDescriptionInput.value = "";
+    financeTemplateSelect.value = "";
+    financeSaveBtnLabel.textContent = "Добавить операцию";
+  }
+
+  function saveFinanceFromForm() {
+    const kind = financeTypeSelect.value;
+    const amount = Number(financeAmountInput.value);
+    if (!amount || Number.isNaN(amount)) {
+      alert("Введи сумму операции.");
+      return;
+    }
+
+    const dateKey = toDateKey(state.currentDate);
+    const finances = getFinancesForDate(dateKey);
+
+    const data = {
+      kind,
+      amount,
+      category: financeCategoryInput.value.trim(),
+      description: financeDescriptionInput.value.trim(),
+      time: financeTimeInput.value || formatTimeHHMM(new Date()),
+    };
+
+    if (state.editingFinanceId) {
+      const idx = finances.findIndex(f => f.id === state.editingFinanceId);
+      if (idx !== -1) finances[idx] = { ...finances[idx], ...data };
+      saveFinancesForDate(dateKey, finances);
+    } else {
+      finances.push({
+        id: generateId(),
+        ...data,
+        createdAt: Date.now(),
+      });
+      saveFinancesForDate(dateKey, finances);
+    }
+
+    resetFinanceForm();
+    renderFinanceDay();
+    updateFinanceRangeStats(); // чтобы диапазон обновился, если входит в него
+  }
+
+  function renderFinanceDay() {
+    const dateKey = toDateKey(state.currentDate);
+    const finances = getFinancesForDate(dateKey);
+    financeDayList.innerHTML = "";
+
+    let expense = 0;
+    let income = 0;
+
+    finances.forEach(f => {
+      if (f.kind === "expense") expense += Number(f.amount) || 0;
+      else income += Number(f.amount) || 0;
+    });
+
+    financeDayExpense.textContent = `−${expense.toFixed(2)}`;
+    financeDayIncome.textContent = `+${income.toFixed(2)}`;
+    financeDayBalance.textContent = (income - expense).toFixed(2);
+
+    if (!finances.length) {
+      const empty = document.createElement("div");
+      empty.className = "finance-empty";
+      empty.textContent = "На этот день операций нет.";
+      financeDayList.appendChild(empty);
+      return;
+    }
+
+    finances
+      .slice()
+      .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
+      .forEach(f => {
+        const row = document.createElement("div");
+        row.className = "finance-row";
+
+        const main = document.createElement("div");
+        main.className = "finance-row-main";
+        const title = document.createElement("div");
+        title.textContent = f.description || "(без описания)";
+        const meta = document.createElement("div");
+        meta.style.fontSize = "11px";
+        meta.style.color = "#9ca3af";
+        meta.textContent = f.category ? f.category : "";
+        main.appendChild(title);
+        if (meta.textContent) main.appendChild(meta);
+
+        const amountEl = document.createElement("div");
+        amountEl.className = `finance-amount ${f.kind}`;
+        amountEl.textContent = `${f.kind === "expense" ? "−" : "+"}${Number(f.amount).toFixed(2)}`;
+
+        const right = document.createElement("div");
+        right.className = "finance-row-meta";
+        right.textContent = f.time || "";
+
+        const actions = document.createElement("div");
+        actions.className = "finance-row-actions";
+        const editBtn = document.createElement("button");
+        editBtn.className = "btn btn-secondary btn-small";
+        editBtn.textContent = "✏";
+        editBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          startEditFinance(f.id);
+        });
+        const delBtn = document.createElement("button");
+        delBtn.className = "btn btn-danger btn-small";
+        delBtn.textContent = "✕";
+        delBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          deleteFinance(f.id);
+        });
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+
+        row.appendChild(main);
+        row.appendChild(amountEl);
+        row.appendChild(actions);
+
+        row.addEventListener("click", () => showFinanceDetail(f, dateKey));
+
+        financeDayList.appendChild(row);
+      });
+  }
+
+  function startEditFinance(financeId) {
+    const dateKey = toDateKey(state.currentDate);
+    const finances = getFinancesForDate(dateKey);
+    const f = finances.find(x => x.id === financeId);
+    if (!f) return;
+
+    state.editingFinanceId = financeId;
+    financeTypeSelect.value = f.kind || "expense";
+    financeAmountInput.value = f.amount != null ? f.amount : "";
+    financeCategoryInput.value = f.category || "";
+    financeTimeInput.value = f.time || "";
+    financeDescriptionInput.value = f.description || "";
+    financeTemplateSelect.value = "";
+    financeSaveBtnLabel.textContent = "Сохранить изменение";
+  }
+
+  function deleteFinance(financeId) {
+    if (!confirm("Удалить операцию?")) return;
+    const dateKey = toDateKey(state.currentDate);
+    const finances = getFinancesForDate(dateKey);
+    const updated = finances.filter(f => f.id !== financeId);
+    saveFinancesForDate(dateKey, updated);
+    if (state.editingFinanceId === financeId) resetFinanceForm();
+    renderFinanceDay();
+    updateFinanceRangeStats();
+  }
+
+  // ===== деньги: диапазон и детали =====
+  function updateFinanceRangeStats() {
+    if (!moneyRangeStartInput.value || !moneyRangeEndInput.value) return;
+
+    let startDate = parseDateFromInput(moneyRangeStartInput.value);
+    let endDate = parseDateFromInput(moneyRangeEndInput.value);
+    if (endDate < startDate) [startDate, endDate] = [endDate, startDate];
+
+    let expense = 0;
+    let income = 0;
+    let count = 0;
+    const rows = [];
+
+    const d = new Date(startDate);
+    while (d <= endDate) {
+      const key = toDateKey(d);
+      const finances = getFinancesForDate(key);
+      finances.forEach(f => {
+        rows.push({ ...f, dateKey: key });
+        if (f.kind === "expense") expense += Number(f.amount) || 0;
+        else income += Number(f.amount) || 0;
+        count++;
+      });
+      d.setDate(d.getDate() + 1);
+    }
+
+    moneyRangeExpense.textContent = `−${expense.toFixed(2)}`;
+    moneyRangeIncome.textContent = `+${income.toFixed(2)}`;
+    moneyRangeBalance.textContent = (income - expense).toFixed(2);
+    moneyRangeCount.textContent = count;
+
+    moneyRangeList.innerHTML = "";
+
+    if (!rows.length) {
+      const empty = document.createElement("div");
+      empty.className = "finance-empty";
+      empty.textContent = "В этом диапазоне нет операций.";
+      moneyRangeList.appendChild(empty);
+      moneyDetailBox.style.display = "none";
+      return;
+    }
+
+    rows
+      .slice()
+      .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
+      .forEach(f => {
+        const row = document.createElement("div");
+        row.className = "finance-row";
+
+        const main = document.createElement("div");
+        main.className = "finance-row-main";
+        const title = document.createElement("div");
+        title.textContent = f.description || "(без описания)";
+        const meta = document.createElement("div");
+        meta.style.fontSize = "11px";
+        meta.style.color = "#9ca3af";
+        meta.textContent = `${f.dateKey}${f.category ? " · " + f.category : ""}`;
+        main.appendChild(title);
+        main.appendChild(meta);
+
+        const amountEl = document.createElement("div");
+        amountEl.className = `finance-amount ${f.kind}`;
+        amountEl.textContent = `${f.kind === "expense" ? "−" : "+"}${Number(f.amount).toFixed(2)}`;
+
+        const right = document.createElement("div");
+        right.className = "finance-row-meta";
+        right.textContent = f.time || "";
+
+        row.appendChild(main);
+        row.appendChild(amountEl);
+        row.appendChild(right);
+
+        row.addEventListener("click", () => showFinanceDetail(f, f.dateKey));
+
+        moneyRangeList.appendChild(row);
+      });
+  }
+
+  function showFinanceDetail(f, dateKey) {
+    state.selectedFinanceDetail = { ...f, dateKey };
+    moneyDetailType.textContent = f.kind === "expense" ? "Расход" : "Доход";
+    moneyDetailAmount.textContent = `${f.kind === "expense" ? "−" : "+"}${Number(f.amount).toFixed(2)}`;
+    moneyDetailDateTime.textContent = `${dateKey} ${f.time || ""}`;
+    moneyDetailCategory.textContent = f.category || "—";
+    moneyDetailDescription.textContent = f.description || "—";
+    moneyDetailBox.style.display = "block";
+  }
+
+  moneyRangeCalcBtn.addEventListener("click", updateFinanceRangeStats);
+
+  // ===== события по деньгам =====
+  financeSaveBtn.addEventListener("click", saveFinanceFromForm);
+  financeResetBtn.addEventListener("click", resetFinanceForm);
+
+  // ===== события по целям =====
   saveTaskBtn.addEventListener("click", saveTaskFromForm);
   resetFormBtn.addEventListener("click", resetForm);
 
-  // ==== старт ====
+  // ===== старт =====
   document.addEventListener("DOMContentLoaded", () => {
     const todayKey = toDateKey(state.currentDate);
     datePicker.value = todayKey;
     periodStartInput.value = todayKey;
     rangeStartInput.value = todayKey;
     rangeEndInput.value = todayKey;
+    moneyRangeStartInput.value = todayKey;
+    moneyRangeEndInput.value = todayKey;
     updatePeriodVisibility();
+    renderFinanceTemplates();
     updateDateUI();
     calcRangeStats();
+    updateFinanceRangeStats();
   });
 </script>
 </body>
